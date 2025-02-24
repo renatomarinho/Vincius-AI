@@ -1,0 +1,10 @@
+.env
+
+/Codebase/*
+/Codebase/**/
+!Codebase/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class

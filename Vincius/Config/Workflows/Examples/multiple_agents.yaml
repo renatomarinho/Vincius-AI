@@ -1,0 +1,118 @@
+workflow:
+  Analysis:
+    description: Analyze and document the requirements for the software.
+    responsible_department: ANALYSIS
+    action:
+      type: class_execution
+      class: AnalystAgent
+      module: Agents.Analyst.agent
+      input_key: null
+      output_key: analysis_result
+      agent_config:
+        model: "gemini-2.0-flash"
+        max_tokens: 1024
+        temperature: 0.7
+        prompt: "Analyze these requirements and create a comprehensive technical specification to create GitHub Actions to a Laravel 11 project to running on AWS. Note: Laravel testing are important." #Focus on architecture, components, and implementation details."
+        guidelines:
+          - "Focus on system architecture and components"
+          - "Consider scalability and maintainability"
+          - "Identify potential technical challenges"
+          - "Document all technical requirements clearly"
+          - "Provide clear implementation recommendations"
+    next_steps:
+      success_step: Development
+
+  Development:
+    description: Develop the software based on the analyzed requirements.
+    responsible_department: DEVELOPMENT
+    action:
+      type: class_execution
+      class: DeveloperAgent
+      module: Agents.Developer.agent
+      input_key: analysis_result
+      output_key: development_output
+      agent_config:
+        model: "gemini-2.0-flash"
+        max_tokens: 2048
+        temperature: 0.9
+        prompt: "Based on the technical analysis, implement the software following best practices and design patterns. Create all necessary files and components."
+        guidelines:
+          - "Develop using a main class"
+          - "Follow SOLID architecture principles"
+          - "Ensure code is modular and reusable"
+          - "Include proper documentation"
+          - "Implement error handling"
+          - "Write clean, maintainable code"
+    next_steps:
+      success_step: Testing
+
+  Testing:
+    description: Test the developed software to ensure it meets the requirements.
+    responsible_department: TESTING
+    action:
+      type: class_execution
+      class: TesterAgent
+      module: Agents.Testing.agent
+      input_key: development_output
+      output_key: testing_report
+      agent_config:
+        model: "gemini-2.0-flash"
+        max_tokens: 512
+        temperature: 0.8
+        prompt: "Analyze the code and create comprehensive tests. Focus on functionality, edge cases, and potential failure points."
+        guidelines:
+          - "Cover all critical functionality"
+          - "Include unit and integration tests"
+          - "Test edge cases and error scenarios"
+          - "Verify performance requirements"
+          - "Document test coverage and results"
+        test_types: ["unit", "integration", "regression"]
+    next_steps:
+      failure_step: BugFixing
+      success_step: Deployment
+
+  BugFixing:
+    description: Identify and fix any bugs found during testing.
+    responsible_department: DEVELOPMENT
+    action:
+      type: class_execution
+      class: BugFixerAgent
+      module: Agents.BugFixer.agent
+      input_key: testing_report
+      output_key: bugfix_result
+      agent_config:
+        model: "gemini-2.0-flash"
+        max_tokens: 1024
+        temperature: 0.8
+        prompt: "Review the test failures, identify root causes, and implement fixes while maintaining code quality and stability."
+        guidelines:
+          - "Prioritize critical bugs"
+          - "Ensure backward compatibility"
+          - "Write unit tests for fixed code"
+          - "Document all changes made"
+          - "Verify fix doesn't introduce new issues"
+    next_steps:
+      success_step: Testing
+
+  Deployment:
+    description: Deploy the final version of the software to production.
+    responsible_department: OPERATIONS
+    action:
+      type: class_execution
+      class: DeployerAgent
+      module: Agents.Deployer.agent
+      input_key: testing_report
+      output_key: deployment_result
+      agent_config:
+        model: "gemini-2.0-flash"
+        max_tokens: 2048
+        temperature: 0.7
+        prompt: "Plan and execute the deployment process ensuring system stability and minimal downtime."
+        guidelines:
+          - "Follow deployment checklist"
+          - "Ensure all tests pass"
+          - "Backup existing data"
+          - "Document deployment steps"
+          - "Prepare rollback plan"
+    next_steps:
+      success_step: {}

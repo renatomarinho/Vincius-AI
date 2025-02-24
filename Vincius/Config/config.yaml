@@ -1,0 +1,18 @@
+# API Keys
+GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+
+# File System Configuration
+PATHS:
+  code_dir: "Codebase"
+  docs_dir: "docs"
+
+# Model Request Timing (in seconds)
+MODEL_SLEEP_TIME:
+  default: 10
+  min: 5
+  max: 30
+  operations:
+    analysis: 10
+    development: 15
+    review: 8
+    testing: 10
