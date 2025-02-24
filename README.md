@@ -337,7 +337,3 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 We welcome contributions! Please check out our [issues page](https://github.com/renatomarinho/Vincius-AI/issues) or submit a pull request.
 
 ## 🚀 Ready to Transform Your IT Operations?
-
-**In Summary:**
-
-This README provides a comprehensive overview of Vincius AI, an AI-powered IT automation system. It covers the key features, including YAML-defined workflows, intelligent AI agents, and Google Gemini integration. It also explains how to configure and customize the system, and provides examples of real-world automation scenarios.
