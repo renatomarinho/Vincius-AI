@@ -299,20 +299,13 @@ The possibilities are endless! You can combine and customize these workflows to 
 
 ## 🛠️ Getting Started
 
-1. **Installation**
+1. **Configuration**
 ```bash
-git clone https://github.com/renatomarinho/Vincius-AI-Agents.git
-cd Vincius-AI-Agents
-pip install -r requirements.txt
-```
-
-2. **Configuration**
-```bash
-# Set your Google API key in config.yaml
+# Set your Google API key in .env
 GOOGLE_API_KEY: "your-api-key-here"
 ```
 
-3. **Run the Workflow**
+2. **Run the Workflow**
 ```bash
 python main.py
 ```
@@ -331,7 +324,6 @@ Vincius/
 
 The `config.yaml` file allows you to configure various aspects of the system:
 
-- **API Keys**: Set your Google Gemini API key.
 - **File Paths**: Define the paths to your code and documentation directories.
 - **Model Settings**: Configure model parameters such as temperature and max tokens.
 - **Timing**: Adjust the sleep time between API requests.
@@ -342,7 +334,7 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ## 🤝 Contributing
 
-We welcome contributions! Please check out our [issues page](https://github.com/renatomarinho/Vincius-AI-Agents/issues) or submit a pull request.
+We welcome contributions! Please check out our [issues page](https://github.com/renatomarinho/Vincius-AI/issues) or submit a pull request.
 
 ## 🚀 Ready to Transform Your IT Operations?
 
