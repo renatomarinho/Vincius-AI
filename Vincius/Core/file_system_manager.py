@@ -14,6 +14,7 @@ class FileSystemManager:
     def __init__(self):
         """Initialize with configurable base directory"""
         self.config_manager = ConfigManager()
+        self.content_parser = ContentParser()  # Adiciona inicialização do content_parser
         project_root = self.config_manager.base_path
         
         # Ensure we're using the absolute project root (where main.py is)
@@ -46,7 +47,7 @@ class FileSystemManager:
                 return None
 
             path = file_info["path"]
-            content = file_info.get("content", "").strip()
+            content = self.content_parser.clean_code_block(file_info['content'])  # Usa o content_parser para limpar o conteúdo antes de salvar
             is_modification = file_info.get("modifications", False)
             description = file_info.get("description", "")
 

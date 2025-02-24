@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import Dict, Any, NamedTuple, List, Optional, Callable
 from Vincius.Core.file_system_manager import FileSystemManager
-from Core.content_parser import ContentParser
 from Vincius.Agents.base_agent import BaseAgent
 
 class CreationResult(NamedTuple):

@@ -118,7 +118,7 @@ class BrainModel:
         """Initialize the model with configuration"""
         try:
             # Extract model name from config
-            model_name = config.pop('model', 'gemini-pro')
+            model_name = config.pop('model', 'gemini-2.0-flash')
             
             # Get generation config without model name
             generation_config = {

@@ -1,0 +1,178 @@
+workflow:
+  Analysis:
+    description: "Analyze and document the requirements for the software."
+    responsible_department: ANALYSIS
+    action:
+      type: class_execution
+      class: AnalystAgent
+      module: Vincius.Agents.Analyst.agent
+      input_key: null
+      output_key: analysis_result
+      agent_config:
+        prompt: "Analyze these requirements and create a comprehensive technical specification to create GitHub Actions to a Laravel 11 project to running on AWS. Note: Laravel testing are important. Nao preciso de nada muito complexo, escreva toda documentacao em portugues"
+        model: "gemini-2.0-flash"
+        max_tokens: 1024
+        temperature: 0.7
+        debug_mode: true
+        guidelines:
+          - "Focus on system architecture and components"
+          - "Consider scalability and maintainability"
+          - "Identify potential technical challenges"
+          - "Document all technical requirements clearly"
+          - "Provide clear implementation recommendations"
+    next_steps:
+      success_step: TaskManager
+
+  TaskManager:
+    description: Break down technical requirements into clear, actionable tasks
+    responsible_department: MANAGER
+    action:
+      type: class_execution
+      class: TaskManagerAgent
+      module: Vincius.Agents.TaskManager.agent
+      input_key: analysis_result
+      output_key: tasks_result
+      agent_config:
+        model: "gemini-2.0-flash"
+        max_tokens: 1024
+        temperature: 0.7
+        prompt: "Analyze the technical requirements and create a structured task breakdown following the provided guidelines"
+        debug_mode: true
+        guidelines:
+          - "Break down complex features into smaller, manageable tasks"
+          - "Create clear and specific task descriptions"
+          - "Assign appropriate difficulty levels (Easy/Medium/Hard)"
+          - "Categorize tasks by type (Feature/Bug/Enhancement/Documentation/Testing)"
+          - "Ensure each task has a unique ID and descriptive title"
+          - "Focus on technical implementation details"
+          - "Keep task descriptions objective and actionable"
+          - "Each task must be implementation-focused"
+          - "Include all necessary technical details in descriptions"
+          - "Ensure tasks are independent and well-defined"
+    next_steps:
+      success_step: Notification
+
+  Notification:
+    description: Send notifications about the process status
+    responsible_department: COMMUNICATIONS
+    action:
+      type: class_execution
+      class: NotificationAgent
+      module: Vincius.Agents.Notification.agent
+      input_key: tasks_result
+      output_key: notification_result
+      agent_config:
+        model: "gemini-2.0-flash"
+        max_tokens: 1024
+        temperature: 0.7
+        prompt: "Create notifications for the specified channels based on the provided data"
+        channels:
+          - "email"
+          - "slack"
+          - "teams"
+          - "whatsapp"
+        guidelines:
+          - "Format message appropriately for each channel"
+          - "Include all relevant information"
+          - "Keep notifications clear and concise"
+          - "Maintain professional tone"
+          - "Include next steps if applicable"
+    next_steps:
+      success_step: APIRequest
+
+  APIRequest:
+    description: Create and format API requests based on input data
+    responsible_department: INTEGRATION
+    action:
+      type: class_execution
+      class: APIRequestAgent
+      module: Vincius.Agents.APIRequest.agent
+      input_key: tasks_result
+      output_key: api_request_result
+      agent_config:
+        model: "gemini-2.0-flash"
+        max_tokens: 1024
+        temperature: 0.7
+        method: "POST"
+        api_config:
+          base_url: "https://api.example.com/v1"
+          version: "1.0"
+          endpoints:
+            resources: "/resources"
+            tasks: "/tasks"
+            projects: "/projects"
+          headers:
+            Content-Type: "application/json"
+            Accept: "application/json"
+          auth:
+            type: "bearer"
+            token_env: "API_TOKEN"
+          request_schema:
+            body:
+              name:
+                type: "string"
+                required: true
+                description: "Name of the resource"
+              description:
+                type: "string"
+                required: false
+                description: "Resource description"
+              category:
+                type: "string"
+                required: true
+                enum: ["feature", "bug", "enhancement"]
+              status:
+                type: "string"
+                default: "pending"
+            params:
+              id:
+                type: "string"
+                required: true
+                description: "Resource identifier"
+              filter:
+                type: "string"
+                required: false
+                description: "Filter criteria"
+              page:
+                type: "integer"
+                default: 1
+                description: "Page number for pagination"
+        prompt: |
+          Transform the input data into an API request following these specifications:
+          1. Use the appropriate endpoint based on resource type
+          2. Map input fields to API schema
+          3. Validate required fields
+          4. Apply data transformations if needed
+          5. Include proper authentication
+        guidelines:
+          - "Map task fields to API schema"
+          - "Include all required fields"
+          - "Validate data types"
+          - "Handle optional parameters"
+          - "Follow API versioning"
+    next_steps:
+      success_step: Deployment
+      error_step: ErrorHandler
+
+  Deployment:
+    description: Deploy the final version of the software to production.
+    responsible_department: OPERATIONS
+    action:
+      type: class_execution
+      class: DeployerAgent
+      module: Vincius.Agents.Deployer.agent
+      input_key: testing_report
+      output_key: deployment_result
+      agent_config:
+        model: "gemini-2.0-flash"
+        max_tokens: 2048
+        temperature: 0.7
+        prompt: "Plan and execute the deployment process ensuring system stability and minimal downtime."
+        guidelines:
+          - "Follow deployment checklist"
+          - "Ensure all tests pass"
+          - "Backup existing data"
+          - "Document deployment steps"
+          - "Prepare rollback plan"
+    next_steps:
+      success_step: {}

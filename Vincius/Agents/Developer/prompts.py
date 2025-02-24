@@ -17,8 +17,9 @@ Provide your implementation using this format for each file:
 FILE: path/to/file.ext
 Type: file_extension
 Description: Brief description of the file's purpose
-Content:
+CONTENT_START
 [Complete implementation code here]
+CONTENT_END
 
 You can create multiple files by repeating this format.
 Each file must be complete and properly structured.
@@ -38,15 +39,17 @@ files:
   - path: path/to/new/file  # For new files
     type: file_type
     description: "Why this file is needed"
-    content: |
+    CONTENT_START
       [File content]
+    CONTENT_END
 
   - path: path/to/existing/file  # For modifications
     type: file_type
     description: "Why modifications are needed"
     modifications: true
-    content: |
+    CONTENT_START
       [Updated content]
+    CONTENT_END
 
 If structure is complete, respond with:
 "Structure is complete and correct."
@@ -77,16 +80,18 @@ files:
     type: {file_type}
     description: |
       Explain needed improvements...
-    content: |
+    CONTENT_START
       [Improved code]
+    CONTENT_END
 
   # Any new files needed
   - path: path/to/new/file
     type: file_type
     description: |
       Why this new file is needed...
-    content: |
+    CONTENT_START
       [New file content]
+    CONTENT_END
 
   # Modifications to related files
   - path: path/to/related/file
@@ -94,8 +99,9 @@ files:
     description: |
       Why this file needs changes...
     modifications: true
-    content: |
+    CONTENT_START
       [Updated content]
+    CONTENT_END
 
 If no improvements needed, respond with:
 "VALIDATION_PASSED: Code follows all best practices."
@@ -116,8 +122,9 @@ Provide complete implementation using this format:
 FILE: {file_path}
 Type: {file_path.split('.')[-1]}
 Description: Complete implementation
-Content:
+CONTENT_START
 [Complete file content here]
+CONTENT_END
 """
 
     @staticmethod
@@ -135,8 +142,9 @@ Please refactor into multiple files using this format for each new file:
 FILE: [path/to/new/file.ext]
 Type: [file_type]
 Description: Explain what this component does and why it was separated
-Content:
+CONTENT_START
 [Complete implementation]
+CONTENT_END
 
 Guidelines:
 1. Each file should be under {max_lines} lines
@@ -164,16 +172,18 @@ If improvements needed, respond using this format:
 FILE: {file_path}
 Type: {file_type}
 Description: Explain improvements needed
-Content:
+CONTENT_START
 [Improved code here]
+CONTENT_END
 
 You can also suggest new files:
 
 FILE: new/related/file.ext
 Type: file_type
 Description: Why this new file is needed
-Content:
+CONTENT_START
 [New file content]
+CONTENT_END
 
 If no improvements needed, respond with:
 "VALIDATION_PASSED: Code follows best practices"

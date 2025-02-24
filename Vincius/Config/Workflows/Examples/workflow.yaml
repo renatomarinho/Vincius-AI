@@ -32,7 +32,7 @@ workflow:
       input_key: analysis_result
       output_key: tasks_result
       agent_config:
-        model: "gemini-pro"
+        model: "gemini-2.0-flash"
         max_tokens: 1024
         temperature: 0.7
         prompt: "Analyze the technical requirements and create a structured task breakdown following the provided guidelines"

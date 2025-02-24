@@ -62,7 +62,7 @@ class ConfigManager:
                 'codebase_dir': 'Codebase'  # Relative to project root, not package
             },
             'MODEL_CONFIG': {
-                'model': 'gemini-pro',
+                'model': 'gemini-2.0-flash',
                 'temperature': 0.7,
                 'top_p': 0.8,
                 'top_k': 40,
@@ -148,7 +148,7 @@ class ConfigManager:
                 'operations': {}
             },
             'MODEL_CONFIG': {
-                'model': 'gemini-pro',
+                'model': 'gemini-2.0-flash',
                 'temperature': 0.7,
                 'top_p': 0.8,
                 'top_k': 40,
