@@ -1,0 +1,49 @@
+workflow:
+  Analysis:
+    description: "Analyze and document the requirements for the software."
+    responsible_department: ANALYSIS
+    action:
+      type: class_execution
+      class: AnalystAgent
+      module: Vincius.Agents.Analyst.agent
+      input_key: null
+      output_key: analysis_result
+      agent_config:
+        base_dir_key: "Docs"
+        prompt: "Develop a PyTorch neural network with Transformers, specifying architecture, training steps, and requirements, while omitting validation, and document the analysis."
+        model: "gemini-2.0-flash"
+        max_tokens: 1024
+        temperature: 0.7
+        debug_mode: true
+        guidelines:
+          - "Focus on system architecture and components"
+          - "Consider scalability and maintainability"
+          - "Identify potential technical challenges"
+          - "Document all technical requirements clearly"
+          - "Provide clear implementation recommendations"
+    next_steps:
+      success_step: Development
+
+  Development:
+    description: "Develop the software based on the analyzed requirements."
+    responsible_department: DEVELOPMENT
+    action:
+      type: class_execution
+      class: DeveloperAgent
+      module: Vincius.Agents.Developer.agent
+      input_key: analysis_result
+      output_key: development_output
+      agent_config:
+        base_dir_key: "Codebase"
+        model: "gemini-2.0-flash"
+        max_tokens: 2048
+        temperature: 0.9
+        prompt: "Based on the technical analysis, implement a scalable PyTorch neural network leveraging Transformers, ensuring a modular architecture with clear component definitions, optimizing resource usage to address potential technical challenges, adhering to documented requirements, and following recommended best practices for efficient training without validation."
+        guidelines:
+          - "Scalable PyTorch Neural Network"
+          - "Leveraging Transformers"
+          - "Modular Architecture"
+          - "Optimizing Resource Usage"
+          - "Best Practices for Efficient Training"
+    next_steps:
+      success_step: {}

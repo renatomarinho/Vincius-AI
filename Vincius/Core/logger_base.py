@@ -6,26 +6,15 @@ import hashlib
 from Vincius.Core.config_manager import ConfigManager  # Add this import
 
 class LoggerBase:
-    VALID_AGENTS = {
-        "Developer": "development_logs",
-        "Analyst": "analysis_logs",
-        "Reviewer": "review_logs",
-        "Tester": "testing_logs",
-        "Deployer": "deployment_logs"
-    }
-
     def __init__(self, base_path: Path, agent_type: str, agent_uuid: str = None):
         """Initialize logger with specific agent type and UUID"""
-        if agent_type not in self.VALID_AGENTS:
-            raise ValueError(f"Invalid agent type. Must be one of: {', '.join(self.VALID_AGENTS.keys())}")
-            
         self.agent_type = agent_type
         self.agent_uuid = agent_uuid or "unknown"
         config = ConfigManager()
         logs_dir = config.base_path / config.get('PATHS.logs_dir', 'Logs')  # Use config for logs directory
         
-        self.log_dir = logs_dir / agent_type
-        self.log_file = self.log_dir / f"{self.VALID_AGENTS[agent_type]}.json"
+        self.log_dir = logs_dir / agent_type  # Create agent-specific directory
+        self.log_file = self.log_dir / f"{agent_type.lower()}_logs.json" # Name log file correctly
         self._initialize_log_directory()
         print(f"📝 {agent_type} logs will be saved to: {self.log_file}")
 

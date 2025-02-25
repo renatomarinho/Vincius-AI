@@ -3,8 +3,10 @@ import yaml
 import time
 import os
 import uuid  # Add UUID import
+from abc import ABC
+from Vincius.Core.config_manager import ConfigManager
 
-class BaseAgent:
+class BaseAgent(ABC):
     """Base class for all agents with retry functionality"""
     
     def __init__(self, config: Dict[str, Any]):
@@ -14,6 +16,11 @@ class BaseAgent:
         self.retry_delay = 10  # seconds
         self.name = None  # Add name property
         self.uuid = str(uuid.uuid4())  # Generate unique identifier
+        
+        # Initialize base directory from config
+        config_manager = ConfigManager()
+        base_dir_key = config.get('base_dir_key', '').lower()
+        self.base_dir = config_manager.get_base_path(base_dir_key)
         
         # Clear previous agent type before setting new one
         if 'CURRENT_AGENT_TYPE' in os.environ:
@@ -26,7 +33,7 @@ class BaseAgent:
         
         # Moved from individual agent classes to make it consistent
         agent_type = self.name or self.__class__.__name__.replace('Agent', '')
-        print(f"🔧 Initialized {agent_type} agent with UUID: {self.uuid[:8]}")
+        print(f"🔧 Initialized {agent_type} agent with UUID: {self.uuid[:8]} in {self.base_dir}")
 
     def __del__(self):
         """Cleanup when agent is destroyed"""

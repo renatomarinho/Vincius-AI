@@ -268,3 +268,7 @@ class ConfigManager:
         except Exception as e:
             print(f"❌ Error getting agent config: {e}")
             return None
+
+    def get_base_path(self, key: str) -> Path:
+        """Get the base path for a specific key."""
+        return self.base_path / key

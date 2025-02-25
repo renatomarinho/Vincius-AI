@@ -2,31 +2,18 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional
 from pathlib import Path
 from Vincius.Core.file_system_manager import FileSystemManager
+from Vincius.Core.logger_base import LoggerBase
 
 class APIMethod(ABC):
     """Base class for API methods"""
     
-    def __init__(self):
+    def __init__(self, logger: LoggerBase):
         self.fs_manager = FileSystemManager()
+        self.logger = logger
     
     @abstractmethod
     def get_method_name(self) -> str:
         """Get HTTP method name"""
-        pass
-    
-    @abstractmethod
-    def get_method_prompt(self, input_data: Any, api_config: Dict) -> str:
-        """Get method-specific prompt for request generation"""
-        pass
-    
-    @abstractmethod
-    def format_request(self, data: Any) -> Dict[str, Any]:
-        """Format request data for this method"""
-        pass
-    
-    @abstractmethod
-    def get_method_rules(self) -> Dict[str, Any]:
-        """Get method-specific rules and requirements"""
         pass
     
     def save_request(self, request: Dict[str, Any], input_data: Any) -> None:
