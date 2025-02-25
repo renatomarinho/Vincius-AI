@@ -37,6 +37,12 @@ class CodeCreator(BaseAgent):
                 retry_prompt=prompt
             )
 
+            # Get recent file operations from logger
+            recent_files = self.fs_manager.logger.get_recent_files()
+            print("\n📝 Recently created/modified files:")
+            for log in recent_files:
+                print(f"- {log['file_path']} ({log['operation']} at {log['timestamp']})")
+
             return CreationResult(result, saved_files)
 
         except Exception as e:

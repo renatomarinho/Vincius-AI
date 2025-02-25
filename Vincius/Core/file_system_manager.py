@@ -7,6 +7,7 @@ import re
 import yaml
 from Vincius.Core.content_parser import ContentParser
 from Vincius.Core.config_manager import ConfigManager
+from Vincius.Core.developer_logger import DeveloperLogger
 
 class FileSystemManager:
     """Manages file system operations for code generation and modifications"""
@@ -31,6 +32,8 @@ class FileSystemManager:
         print(f"📁 Project root: {project_root.absolute()}")
         print(f"📁 Codebase directory: {self.code_dir.absolute()}")
         
+        self.logger = DeveloperLogger(project_root)
+
     def _clean_path(self, path: str) -> str:
         """Clean path from invalid characters and decorations"""
         # Remove asterisks and other special characters
@@ -105,6 +108,13 @@ class FileSystemManager:
                 
                 print(f"✅ File written successfully: {full_path}")
                 print(f"✅ Content length: {len(written_content)} characters")
+                
+                # Log the file creation/modification
+                self.logger.log_file_creation(
+                    full_path,
+                    description=file_info.get("description", ""),
+                    is_modification=file_info.get("modifications", False)
+                )
                 return full_path
 
             except Exception as e:
