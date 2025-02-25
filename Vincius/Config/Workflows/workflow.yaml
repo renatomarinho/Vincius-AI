@@ -10,7 +10,7 @@ workflow:
       output_key: analysis_result
       agent_config:
         base_dir_key: "Docs"
-        prompt: "Escreva os requerimentos para criar um site em html com 3 paginas, home, experiencies e sobre. Escolha o conteudo o as paginas deve ter um design moderno usando o tailwind"
+        prompt: "Develop a PyTorch neural network with Transformers, specifying architecture, training steps, and requirements, while omitting validation, and document the analysis."
         model: "gemini-2.0-flash"
         max_tokens: 1024
         temperature: 0.7
@@ -38,13 +38,12 @@ workflow:
         model: "gemini-2.0-flash"
         max_tokens: 2048
         temperature: 0.9
-        prompt: "Based on the technical analysis, implement the the html pages usign modern design with tailwind."
+        prompt: "Based on the technical analysis, implement a scalable PyTorch neural network leveraging Transformers, ensuring a modular architecture with clear component definitions, optimizing resource usage to address potential technical challenges, adhering to documented requirements, and following recommended best practices for efficient training without validation."
         guidelines:
-          - "Develop using a clean html"
-          - "HTML and CSS"
-          - "Tailwind"
-          - "Modern Design"
-          - "Implement error handling"
-          - "Write clean, maintainable code"
+          - "Scalable PyTorch Neural Network"
+          - "Leveraging Transformers"
+          - "Modular Architecture"
+          - "Optimizing Resource Usage"
+          - "Best Practices for Efficient Training"
     next_steps:
       success_step: {}

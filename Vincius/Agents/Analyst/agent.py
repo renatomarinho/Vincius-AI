@@ -16,9 +16,8 @@ class AnalystAgent(BaseAgent):
         self.brain = BrainModel()
         self.analyzer = RequirementsAnalyzer()  # Add missing analyzer
         self.reviewer = AnalysisReviewer()  # Add missing reviewer
-        self.fs_manager = FileSystemManager()
-        print(f"🔧 Initialized {self.name} agent")
-        # Removida a criação redundante da pasta docs
+        self.fs_manager = FileSystemManager(agent=self)  # Pass self reference for UUID access
+        print(f"🔧 Initialized {self.name} agent with UUID: {self.uuid[:8]}")
 
     def execute(self, input_data: Any = None) -> str:
         try:

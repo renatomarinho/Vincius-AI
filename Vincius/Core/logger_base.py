@@ -14,12 +14,13 @@ class LoggerBase:
         "Deployer": "deployment_logs"
     }
 
-    def __init__(self, base_path: Path, agent_type: str):
-        """Initialize logger with specific agent type"""
+    def __init__(self, base_path: Path, agent_type: str, agent_uuid: str = None):
+        """Initialize logger with specific agent type and UUID"""
         if agent_type not in self.VALID_AGENTS:
             raise ValueError(f"Invalid agent type. Must be one of: {', '.join(self.VALID_AGENTS.keys())}")
             
         self.agent_type = agent_type
+        self.agent_uuid = agent_uuid or "unknown"
         config = ConfigManager()
         logs_dir = config.base_path / config.get('PATHS.logs_dir', 'Logs')  # Use config for logs directory
         
@@ -88,12 +89,13 @@ class LoggerBase:
             "description": description,
             "file_size": file_path.stat().st_size if file_path.exists() else 0,
             "version": version,
-            "content_hash": content_hash
+            "content_hash": content_hash,
+            "agent_uuid": self.agent_uuid  # Add agent UUID to the log entry
         }
         
         logs.append(log_entry)
         self._write_log_file(logs)
-        print(f"📝 Logged {log_entry['operation']} of {file_path_str} (v{version})")
+        print(f"📝 Logged {log_entry['operation']} of {file_path_str} (v{version}) by agent {self.agent_uuid[:8]}")
 
     def get_file_history(self, file_path: str) -> List[Dict[str, Any]]:
         """Get version history of a specific file"""

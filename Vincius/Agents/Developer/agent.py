@@ -14,8 +14,8 @@ class DeveloperAgent(BaseAgent):
         self.brain = BrainModel()
         self.code_creator = CodeCreator()
         self.code_reviewer = CodeReviewer()
-        self.fs_manager = FileSystemManager()
-        print(f"🔧 Initialized {self.name} agent")
+        self.fs_manager = FileSystemManager(agent=self)  # Pass self reference
+        print(f"🔧 Initialized {self.name} agent with UUID: {self.uuid[:8]}")
 
     def execute(self, input_data: Any = None) -> str:
         try:

@@ -7,28 +7,36 @@ import re
 import yaml
 from Vincius.Core.content_parser import ContentParser
 from Vincius.Core.config_manager import ConfigManager
-from Vincius.Core.developer_logger import DeveloperLogger
-from Vincius.Core.analyst_logger import AnalystLogger
+from Vincius.Core.agent_logger import AgentLogger
 from Vincius.Core.logger_base import LoggerBase
 from importlib import import_module
 
 class FileSystemManager:
     """Manages file system operations for code generation and modifications"""
     
-    def __init__(self):
+    def __init__(self, agent=None):
         self.config_manager = ConfigManager()
         self.content_parser = ContentParser()
         self.project_root = self.config_manager.base_path
+        self.agent = agent  # Store reference to the agent if provided
         
-        # Initialize logger based on current agent type
+        # Initialize logger based on current agent type and UUID
         self.current_agent = os.environ.get('CURRENT_AGENT_TYPE', 'Developer')
+        self.agent_uuid = None
+        
+        # Get UUID directly from agent if provided
+        if self.agent and hasattr(self.agent, 'uuid'):
+            self.agent_uuid = self.agent.uuid  # Extract UUID from agent
+        else:
+            self.agent_uuid = os.environ.get('CURRENT_AGENT_UUID', None)
+            
         self.agent_config = self._get_agent_config()
         
         # Create and initialize base directory
         self.base_dir = self._initialize_base_directory()
         self.logger = self._initialize_logger()
         
-        print(f"🔧 Initialized {self.current_agent} agent in {self.base_dir}")
+        print(f"🔧 Initialized {self.current_agent} agent (ID: {self.agent_uuid[:8] if self.agent_uuid else 'unknown'}) in {self.base_dir}")
 
     def _get_agent_config(self) -> Dict:
         """Get agent configuration from workflow"""
@@ -56,23 +64,13 @@ class FileSystemManager:
         return base_dir
 
     def _initialize_logger(self) -> LoggerBase:
-        """Initialize appropriate logger for agent"""
-        logger_class = self._get_logger_class()
-        return logger_class(self.project_root)
-
-    def _get_logger_class(self) -> type:
-        """Get logger class dynamically based on agent type"""
-        try:
-            # Import logger dynamically
-            module_name = f"Vincius.Core.{self.current_agent.lower()}_logger"
-            class_name = f"{self.current_agent}Logger"
-            
-            module = import_module(module_name)
-            logger_class = getattr(module, class_name)
-            
-            return logger_class
-        except Exception as e:
-            raise ValueError(f"Failed to load logger for agent {self.current_agent}: {e}")
+        """Initialize logger for current agent"""
+        return AgentLogger(
+            self.project_root, 
+            agent_type=self.current_agent,
+            agent_uuid=self.agent_uuid,
+            agent=self.agent  # Pass the agent reference
+        )
 
     def _clean_path(self, path: str) -> str:
         """Clean path from invalid characters and decorations"""

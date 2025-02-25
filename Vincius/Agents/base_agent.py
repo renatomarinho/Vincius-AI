@@ -2,6 +2,7 @@ from typing import Dict, Any, Optional, List, Callable
 import yaml
 import time
 import os
+import uuid  # Add UUID import
 
 class BaseAgent:
     """Base class for all agents with retry functionality"""
@@ -12,6 +13,7 @@ class BaseAgent:
         self.max_retries = 3
         self.retry_delay = 10  # seconds
         self.name = None  # Add name property
+        self.uuid = str(uuid.uuid4())  # Generate unique identifier
         
         # Clear previous agent type before setting new one
         if 'CURRENT_AGENT_TYPE' in os.environ:
@@ -19,18 +21,30 @@ class BaseAgent:
             
         # Set current agent type
         os.environ['CURRENT_AGENT_TYPE'] = self.__class__.__name__.replace('Agent', '')
-        print(f"🔄 Switched to agent: {os.environ['CURRENT_AGENT_TYPE']}")
+        os.environ['CURRENT_AGENT_UUID'] = self.uuid  # Store UUID in environment
+        print(f"🔄 Switched to agent: {os.environ['CURRENT_AGENT_TYPE']} (ID: {self.uuid[:8]})")
+        
+        # Moved from individual agent classes to make it consistent
+        agent_type = self.name or self.__class__.__name__.replace('Agent', '')
+        print(f"🔧 Initialized {agent_type} agent with UUID: {self.uuid[:8]}")
 
     def __del__(self):
         """Cleanup when agent is destroyed"""
         if 'CURRENT_AGENT_TYPE' in os.environ:
             del os.environ['CURRENT_AGENT_TYPE']
-            print(f"🧹 Cleaned up agent environment")
+        if 'CURRENT_AGENT_UUID' in os.environ:
+            del os.environ['CURRENT_AGENT_UUID']
+        print(f"🧹 Cleaned up agent environment")
 
     @property
     def agent_type(self) -> str:
         """Get the current agent type"""
         return self.name or self.__class__.__name__.replace('Agent', '')
+        
+    @property
+    def agent_id(self) -> str:
+        """Get the agent's unique identifier"""
+        return self.uuid
 
     def _retry_on_failure(self, prompt: str, brain: Any, error_msg: str = "") -> Optional[str]:
         """Retry functionality for model requests with better error handling"""
