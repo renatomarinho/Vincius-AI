@@ -1,7 +1,13 @@
 .env
 
 /Codebase/*
-/Codebase/**/
+!/Codebase/.gitkeep
+/Docs/*
+!/Docs/.gitkeep
+/Logs/*
+!/Logs/.gitkeep
+/Tests/*
+!/Tests/.gitkeep
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
