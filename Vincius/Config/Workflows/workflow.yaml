@@ -6,7 +6,7 @@ workflow:
       type: class_execution
       class: APIRequestAgent
       module: Vincius.Agents.APIRequest.agent
-      input_key: prompt_output
+      input_key: null
       output_key: api_request_result
       agent_config:
         base_dir_key: "API"

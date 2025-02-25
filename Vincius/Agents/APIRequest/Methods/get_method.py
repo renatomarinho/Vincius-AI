@@ -1,10 +1,10 @@
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import requests
 import json
-# from Vincius.Agents.APIRequest.Methods.base_method import APIMethod
 from pathlib import Path
 import time
 import datetime
+import re
 
 class GetMethod:
     def __init__(self, logger, base_path):
@@ -14,10 +14,28 @@ class GetMethod:
     def get_method_name(self) -> str:
         return "GET"
 
-    def execute_request(self, base_url: str, params: Dict[str, Any] = None) -> Any:
+    def _process_url_params(self, url: str, params: Dict[str, Any]) -> tuple[str, Dict[str, Any]]:
+        """Process URL parameters and return the formatted URL and remaining query params"""
+        # Find all template parameters in the URL {param_name}
+        template_params = re.findall(r'\{([^}]+)\}', url)
+        query_params = params.copy()
+        
+        # Replace template parameters with values from params
+        for param in template_params:
+            if param in params:
+                url = url.replace(f'{{{param}}}', str(params[param]))
+                query_params.pop(param)  # Remove used parameter from query params
+        
+        return url, query_params
+
+    def execute_request(self, base_url: str, params: Dict[str, Any] = None, headers: Dict[str, Any] = None, auth: Optional[requests.auth.AuthBase] = None) -> Any:
         start_time = time.time()
         try:
-            response = requests.get(base_url, params=params)
+            # Process URL parameters if any
+            params = params or {}
+            url, query_params = self._process_url_params(base_url, params)
+            
+            response = requests.get(url, params=query_params, headers=headers, auth=auth)
             response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
             
             end_time = time.time()
@@ -42,6 +60,7 @@ class GetMethod:
                 "request_start_time_timestamp": start_time,
                 "total_request_time": total_time,
                 "content_length": response.headers.get('content-length'),
+                "cache_control": response.headers.get('cache-control'),
                 "content_type": response.headers.get('content-type')
             }
             

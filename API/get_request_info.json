@@ -89,9 +89,10 @@
     ]
   },
   "http_status_code": 200,
-  "request_start_time": "Tue, 25 Feb 2025 21:49:30 UTC",
-  "request_start_time_timestamp": 1740520170.548345,
-  "total_request_time": 0.30721306800842285,
+  "request_start_time": "Tue, 25 Feb 2025 23:38:38 UTC",
+  "request_start_time_timestamp": 1740526718.1356387,
+  "total_request_time": 0.26480674743652344,
   "content_length": "1861",
+  "cache_control": null,
   "content_type": "application/json; charset=UTF-8"
 }
