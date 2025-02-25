@@ -11,13 +11,14 @@ from Vincius.Core.file_system_manager import FileSystemManager
 class AnalystAgent(BaseAgent):
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
+        self.name = "Analyst"  # Set name before initializing other components
+        self.config = config
         self.brain = BrainModel()
-        self.analyzer = RequirementsAnalyzer()
-        self.reviewer = AnalysisReviewer()
+        self.analyzer = RequirementsAnalyzer()  # Add missing analyzer
+        self.reviewer = AnalysisReviewer()  # Add missing reviewer
         self.fs_manager = FileSystemManager()
-        
-        # Ensure docs directory exists
-        (self.fs_manager.code_dir / "docs").mkdir(exist_ok=True)
+        print(f"🔧 Initialized {self.name} agent")
+        # Removida a criação redundante da pasta docs
 
     def execute(self, input_data: Any = None) -> str:
         try:
@@ -36,7 +37,7 @@ class AnalystAgent(BaseAgent):
             # Save technical analysis first
             technical_analysis = self._format_technical_analysis(result.content)
             tech_file_info = {
-                "path": "docs/technical_requirements.md",
+                "path": "technical_requirements.md",  # Arquivo será salvo na pasta Docs raiz
                 "type": "markdown",
                 "content": technical_analysis,
                 "description": "Technical Requirements Analysis"
@@ -62,7 +63,7 @@ class AnalystAgent(BaseAgent):
 
                 # Save final report
                 report_file_info = {
-                    "path": "docs/final_analysis.md",
+                    "path": "final_analysis.md",  # Arquivo será salvo na pasta Docs raiz
                     "type": "markdown",
                     "content": report.strip(),
                     "description": "Final Analysis Report"

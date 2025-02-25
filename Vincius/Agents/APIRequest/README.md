@@ -103,7 +103,7 @@ result = agent.execute({"id": "123"})
 ```
 
 ## Output Format
-The agent generates JSON files in `/docs/requests/` with this structure:
+The agent generates JSON files in `/Docs/requests/` with this structure:
 ```json
 {
     "method": "POST",

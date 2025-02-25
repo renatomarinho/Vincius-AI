@@ -7,6 +7,7 @@ class ConfigManager:
     _instance = None
     _config = None
     _base_path = None
+    _workflow = None  # Add workflow as class variable
 
     def __new__(cls):
         if cls._instance is None:
@@ -19,6 +20,7 @@ class ConfigManager:
             return
         self._initialized = True
         self._load_config()
+        self._workflow = self._load_workflow()  # Store in class variable instead of instance
 
     @classmethod
     def _get_project_root(cls) -> Path:
@@ -207,7 +209,7 @@ class ConfigManager:
     @property
     def workflow(self) -> Dict:
         """Get workflow configuration"""
-        return self.get('workflow', {})
+        return self._workflow or {}  # Use class variable
 
     @property
     def codebase_path(self) -> Path:
@@ -217,3 +219,52 @@ class ConfigManager:
         codebase.mkdir(parents=True, exist_ok=True)
         print(f"📂 Using codebase directory: {codebase.absolute()}")
         return codebase
+
+    def _load_workflow(self) -> Dict[str, Any]:
+        """Load workflow configuration file"""
+        workflow_path = self.base_path / "Vincius" / "Config" / "Workflows" / "workflow.yaml"
+        try:
+            with open(workflow_path, 'r') as f:
+                return yaml.safe_load(f)
+        except Exception as e:
+            print(f"❌ Error loading workflow: {e}")
+            return {}
+
+    def get_workflow(self) -> Dict[str, Any]:
+        """Get workflow configuration with validation"""
+        if not self._workflow:
+            raise ValueError("Workflow configuration not loaded")
+        
+        # Ensure workflow has proper structure
+        if not isinstance(self._workflow, dict) or 'workflow' not in self._workflow:
+            raise ValueError("Invalid workflow configuration format")
+            
+        workflow = self._workflow.get('workflow', {})
+        if not workflow:
+            raise ValueError("Empty workflow configuration")
+            
+        print(f"📋 Loaded workflow with {len(workflow)} steps:")
+        for step_name, step_config in workflow.items():
+            print(f"  - {step_name}: {step_config.get('description', 'No description')}")
+            
+        return self._workflow
+
+    def get_agent_config(self, agent_name: str) -> Optional[Dict[str, Any]]:
+        """Get specific agent configuration from workflow"""
+        try:
+            workflow_data = self.get_workflow()
+            workflow_steps = workflow_data.get('workflow', {})
+            
+            for step in workflow_steps.values():
+                action = step.get('action', {})
+                if action.get('class', '').replace('Agent', '') == agent_name:
+                    agent_config = action.get('agent_config', {})
+                    print(f"📝 Found configuration for agent {agent_name}")
+                    return agent_config
+                    
+            print(f"⚠️ No configuration found for agent {agent_name}")
+            return None
+            
+        except Exception as e:
+            print(f"❌ Error getting agent config: {e}")
+            return None

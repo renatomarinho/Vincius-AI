@@ -42,7 +42,7 @@ If any errors are found, format the response as:
 ERROR: [Error description]
 
 Otherwise, format your response exactly like this:
-FILE: docs/project_tasks.csv
+FILE: Docs/project_tasks.csv
 Type: csv
 Description: Project task breakdown
 Content:

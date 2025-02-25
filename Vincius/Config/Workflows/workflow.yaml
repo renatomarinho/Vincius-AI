@@ -9,6 +9,7 @@ workflow:
       input_key: null
       output_key: analysis_result
       agent_config:
+        base_dir_key: "Docs"
         prompt: "Escreva os requerimentos para criar um site em html com 3 paginas, home, experiencies e sobre. Escolha o conteudo o as paginas deve ter um design moderno usando o tailwind"
         model: "gemini-2.0-flash"
         max_tokens: 1024
@@ -24,7 +25,7 @@ workflow:
       success_step: Development
 
   Development:
-    description: Develop the software based on the analyzed requirements.
+    description: "Develop the software based on the analyzed requirements."
     responsible_department: DEVELOPMENT
     action:
       type: class_execution
@@ -33,6 +34,7 @@ workflow:
       input_key: analysis_result
       output_key: development_output
       agent_config:
+        base_dir_key: "Codebase"
         model: "gemini-2.0-flash"
         max_tokens: 2048
         temperature: 0.9

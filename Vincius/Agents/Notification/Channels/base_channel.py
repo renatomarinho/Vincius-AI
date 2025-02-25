@@ -6,7 +6,7 @@ class NotificationChannel(ABC):
     
     @property
     def docs_path(self) -> str:
-        return "docs/notifications"
+        return "Docs/notifications"
     
     def _ensure_string_content(self, content: Union[str, Dict]) -> str:
         """Convert content to string safely"""

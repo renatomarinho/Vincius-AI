@@ -53,12 +53,12 @@ class TesterAgent(BaseAgent):
         """Read all technical documentation from docs folder"""
         docs = {}
         try:
-            docs_path = self.fs_manager.code_dir / "docs"
+            docs_path = self.fs_manager.docs_dir  # Use new docs_dir path
             if not docs_path.exists():
                 return {}
 
             for file in docs_path.glob("*.md"):
-                content = self.fs_manager.get_file_content(file.relative_to(self.fs_manager.code_dir))
+                content = file.read_text(encoding='utf-8')
                 if content:
                     docs[file.name] = content
 

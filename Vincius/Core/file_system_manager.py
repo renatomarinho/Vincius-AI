@@ -1,4 +1,4 @@
-import os  # Add this import at the top
+import os
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 import shutil
@@ -8,31 +8,71 @@ import yaml
 from Vincius.Core.content_parser import ContentParser
 from Vincius.Core.config_manager import ConfigManager
 from Vincius.Core.developer_logger import DeveloperLogger
+from Vincius.Core.analyst_logger import AnalystLogger
+from Vincius.Core.logger_base import LoggerBase
+from importlib import import_module
 
 class FileSystemManager:
     """Manages file system operations for code generation and modifications"""
     
     def __init__(self):
-        """Initialize with configurable base directory"""
         self.config_manager = ConfigManager()
-        self.content_parser = ContentParser()  # Adiciona inicialização do content_parser
-        project_root = self.config_manager.base_path
+        self.content_parser = ContentParser()
+        self.project_root = self.config_manager.base_path
         
-        # Ensure we're using the absolute project root (where main.py is)
-        self.code_dir = project_root.resolve() / "Codebase"
+        # Initialize logger based on current agent type
+        self.current_agent = os.environ.get('CURRENT_AGENT_TYPE', 'Developer')
+        self.agent_config = self._get_agent_config()
         
-        # Create directory with explicit error checking
+        # Create and initialize base directory
+        self.base_dir = self._initialize_base_directory()
+        self.logger = self._initialize_logger()
+        
+        print(f"🔧 Initialized {self.current_agent} agent in {self.base_dir}")
+
+    def _get_agent_config(self) -> Dict:
+        """Get agent configuration from workflow"""
         try:
-            os.makedirs(self.code_dir, exist_ok=True)
-            print(f"📁 Created/Verified Codebase directory at: {self.code_dir.absolute()}")
+            workflow = self.config_manager.get_workflow()
+            for step in workflow['workflow'].values():
+                if step['action']['class'].replace('Agent', '') == self.current_agent:
+                    return step['action']['agent_config']
+            raise ValueError(f"Configuration not found for agent: {self.current_agent}")
         except Exception as e:
-            print(f"❌ Failed to create Codebase directory: {e}")
-            raise
+            raise ValueError(f"Failed to get agent configuration: {e}")
+
+    def _initialize_base_directory(self) -> Path:
+        """Initialize and verify base directory for agent"""
+        base_dir_key = self.agent_config.get('base_dir_key')
+        if not base_dir_key:
+            raise ValueError(f"base_dir_key not defined for agent {self.current_agent} in workflow configuration")
         
-        print(f"📁 Project root: {project_root.absolute()}")
-        print(f"📁 Codebase directory: {self.code_dir.absolute()}")
+        base_dir = self.project_root / base_dir_key
+        os.makedirs(base_dir, exist_ok=True)
         
-        self.logger = DeveloperLogger(project_root)
+        if not base_dir.exists():
+            raise IOError(f"Failed to create/verify directory: {base_dir}")
+            
+        return base_dir
+
+    def _initialize_logger(self) -> LoggerBase:
+        """Initialize appropriate logger for agent"""
+        logger_class = self._get_logger_class()
+        return logger_class(self.project_root)
+
+    def _get_logger_class(self) -> type:
+        """Get logger class dynamically based on agent type"""
+        try:
+            # Import logger dynamically
+            module_name = f"Vincius.Core.{self.current_agent.lower()}_logger"
+            class_name = f"{self.current_agent}Logger"
+            
+            module = import_module(module_name)
+            logger_class = getattr(module, class_name)
+            
+            return logger_class
+        except Exception as e:
+            raise ValueError(f"Failed to load logger for agent {self.current_agent}: {e}")
 
     def _clean_path(self, path: str) -> str:
         """Clean path from invalid characters and decorations"""
@@ -60,13 +100,14 @@ class FileSystemManager:
 
             # Always use absolute paths and verify directory
             file_path = Path(str(path))
+
+            # Use the agent's base directory
             if not file_path.is_absolute():
-                full_path = self.code_dir.resolve() / file_path
+                full_path = self.base_dir / file_path
             else:
                 try:
-                    # Make sure we're using the correct codebase directory
-                    rel_path = file_path.relative_to(self.code_dir)
-                    full_path = self.code_dir / rel_path
+                    rel_path = file_path.relative_to(self.base_dir)
+                    full_path = self.base_dir / rel_path
                 except ValueError:
                     full_path = file_path
 
@@ -109,12 +150,14 @@ class FileSystemManager:
                 print(f"✅ File written successfully: {full_path}")
                 print(f"✅ Content length: {len(written_content)} characters")
                 
-                # Log the file creation/modification
+                # Log using the current agent's logger
                 self.logger.log_file_creation(
                     full_path,
                     description=file_info.get("description", ""),
-                    is_modification=file_info.get("modifications", False)
+                    is_modification=file_info.get("modifications", False),
+                    content=content
                 )
+                print(f"📝 Logged by {self.current_agent} agent")
                 return full_path
 
             except Exception as e:
@@ -138,6 +181,9 @@ class FileSystemManager:
         print(f"Content length: {len(content)} characters")
         print(f"Content preview:\n{content[:200]}...")
         
+        # Create a ContentParser instance to use non-static methods
+        parser = ContentParser()
+        
         processed_files = []
         max_retries = 3
         current_try = 0
@@ -145,7 +191,14 @@ class FileSystemManager:
         while current_try < max_retries:
             try:
                 print(f"\n📝 DEBUG: Parsing attempt {current_try + 1}")
-                files_info = ContentParser.parse_files_section(content)
+                
+                # Use the improved parsing methods
+                files_info = parser.parse_files_section(content)
+                
+                if not files_info:
+                    # Try even more aggressive parsing for file sections
+                    print("⚠️ Standard parsing failed, trying emergency parsing...")
+                    files_info = self._emergency_parse_files(content)
                 
                 if not files_info:
                     print("⚠️ DEBUG: No valid file sections found in content")
@@ -192,9 +245,65 @@ class FileSystemManager:
         print("\n❌ DEBUG: All attempts failed")
         return processed_files
 
+    def _emergency_parse_files(self, content: str) -> List[Dict[str, Any]]:
+        """Last resort parsing for file sections when all else fails"""
+        files = []
+        
+        # Simple regex to find file names and extensions
+        file_patterns = [
+            r'([\w\-\.\/]+\.(html|css|js|py|md|json|xml|txt))',  # Common extensions
+            r'FILE:\s*([\w\-\.\/]+\.[a-zA-Z0-9]+)',  # FILE: pattern
+            r'Path:\s*([\w\-\.\/]+\.[a-zA-Z0-9]+)'   # Path: pattern
+        ]
+        
+        # Find all potential filenames
+        potential_files = set()
+        for pattern in file_patterns:
+            matches = re.finditer(pattern, content, re.IGNORECASE)
+            for match in matches:
+                filename = match.group(1).strip() if len(match.groups()) > 0 else ""
+                if filename:
+                    potential_files.add(filename)
+        
+        # For each potential filename, try to extract content
+        for filename in potential_files:
+            # Find the position of the filename
+            pos = content.find(filename)
+            if pos >= 0:
+                # Extract everything after the filename until next potential filename or end
+                next_pos = len(content)
+                for next_file in potential_files:
+                    if next_file != filename:
+                        next_file_pos = content.find(next_file, pos + len(filename))
+                        if next_file_pos > pos and next_file_pos < next_pos:
+                            next_pos = next_file_pos
+                
+                # Extract the content
+                file_section = content[pos:next_pos].strip()
+                
+                # Try to find where the actual content starts
+                content_start = file_section.find('\n')
+                if content_start > 0:
+                    file_content = file_section[content_start:].strip()
+                    
+                    # Clean up the content - remove common prefixes
+                    file_content = re.sub(r'^Content:[\s]*\n', '', file_content, flags=re.IGNORECASE)
+                    
+                    files.append({
+                        "path": filename,
+                        "content": file_content,
+                        "description": f"Extracted using emergency parsing",
+                        "modifications": False
+                    })
+        
+        if files:
+            print(f"✅ Found {len(files)} file sections using emergency parsing")
+            
+        return files
+
     def backup_file(self, file_path: Path) -> Path:
         """Create a backup of a file with timestamp"""
-        backup_dir = self.code_dir / "backups"
+        backup_dir = self.base_dir / "backups"  # Use base_dir instead of code_dir
         backup_dir.mkdir(exist_ok=True)
         
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -207,7 +316,7 @@ class FileSystemManager:
     def get_file_content(self, file_path: Path) -> Optional[str]:
         """Safely read file content"""
         try:
-            full_path = self.code_dir / file_path
+            full_path = self.base_dir / file_path  # Use base_dir instead of code_dir
             if not full_path.exists():
                 print(f"⚠️ File not found: {file_path}")
                 return None
@@ -237,11 +346,11 @@ class FileSystemManager:
     def _create_structure_representation(self, files: List[Path]) -> str:
         """Create a string representation of the file structure"""
         try:
-            sorted_files = sorted(files, key=lambda x: str(x.relative_to(self.code_dir)))
+            sorted_files = sorted(files, key=lambda x: str(x.relative_to(self.base_dir)))  # Use base_dir
             structure = []
             
             for file_path in sorted_files:
-                rel_path = file_path.relative_to(self.code_dir)
+                rel_path = file_path.relative_to(self.base_dir)  # Use base_dir
                 structure.append(f"- {rel_path}")
             
             return "\n".join(structure)
@@ -250,9 +359,9 @@ class FileSystemManager:
             return ""
 
     def list_files(self, directory: Optional[str] = None) -> List[Path]:
-        """List all files in directory (relative to code_dir)"""
+        """List all files in directory"""
         try:
-            search_dir = self.code_dir
+            search_dir = self.base_dir  # Use base_dir instead of code_dir
             if directory:
                 search_dir = search_dir / directory
             
@@ -269,7 +378,7 @@ class FileSystemManager:
     def delete_file(self, file_path: Path, backup: bool = True) -> bool:
         """Safely delete a file with optional backup"""
         try:
-            full_path = self.code_dir / file_path
+            full_path = self.base_dir / file_path  # Use base_dir instead of code_dir
             if not full_path.exists():
                 print(f"⚠️ File not found: {file_path}")
                 return False

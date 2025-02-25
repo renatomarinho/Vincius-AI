@@ -1,30 +1,24 @@
 from pathlib import Path
-from typing import Dict, Any, NamedTuple, List, Optional, Callable
+from typing import Dict, Any, NamedTuple, List, Optional
 from Vincius.Core.file_system_manager import FileSystemManager
-from Vincius.Agents.base_agent import BaseAgent
+from Vincius.Agents.Developer.prompts import DeveloperPrompts
 
 class CreationResult(NamedTuple):
     content: str
     saved_files: List[Path]
 
-class CodeCreator(BaseAgent):
+class CodeCreator:  # Remove BaseAgent inheritance
     def __init__(self):
-        super().__init__({})
         self.fs_manager = FileSystemManager()
+        print("🔧 Initialized CodeCreator")
 
     def create_from_analysis(self, input_data: Any, brain: Any, config: Dict) -> CreationResult:
-        """Create code files from analysis with automatic retry"""
+        """Create code files from analysis"""
         try:
-            self.brain = brain
-            self.config = config
-            prompt = self._generate_prompt(str(input_data), config)
+            prompt = DeveloperPrompts.code_creation(str(input_data), config.get('guidelines', []))
             
-            # Use retry mechanism from BaseAgent
-            result = self._retry_on_failure(
-                prompt=prompt,
-                brain=brain,
-                error_msg="Failed to generate code implementation"
-            )
+            # Generate code implementation
+            result = brain.generate(prompt, config)
             
             if not result:
                 return CreationResult("", [])
@@ -48,29 +42,3 @@ class CodeCreator(BaseAgent):
         except Exception as e:
             print(f"❌ Error in create_from_analysis: {e}")
             return CreationResult("", [])
-
-    def _generate_prompt(self, input_data: str, config: Dict) -> str:
-        """Generate creation prompt with file-based format"""
-        guidelines = config.get('guidelines', [])
-        guidelines_text = "\n".join(f"- {g}" for g in guidelines)
-        
-        return f"""
-Based on this analysis, generate implementation code:
-
-{input_data}
-
-Follow these guidelines:
-{guidelines_text}
-
-Provide your implementation using this format for each file:
-
-FILE: path/to/file.ext
-Type: file_type
-Description: Brief description of the file's purpose
-Content:
-[Complete implementation code here]
-
-You can create multiple files by repeating this format.
-Each file must be complete and properly structured.
-Include all necessary files for the implementation.
-"""

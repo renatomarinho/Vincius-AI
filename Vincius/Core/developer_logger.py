@@ -2,13 +2,11 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List
+from Vincius.Core.logger_base import LoggerBase
 
-class DeveloperLogger:
+class DeveloperLogger(LoggerBase):
     def __init__(self, base_path: Path):
-        self.log_dir = base_path / "Log" / "Developer"  # Changed to use Log/Developer directory
-        self.log_file = self.log_dir / "file_creation_log.json"
-        self._initialize_log_directory()
-        print(f"📝 Developer logs will be saved to: {self.log_dir}")
+        super().__init__(base_path, "Developer")
 
     def _initialize_log_directory(self):
         """Create log directory and file if they don't exist"""
@@ -32,20 +30,15 @@ class DeveloperLogger:
         """Write logs to the log file"""
         self.log_file.write_text(json.dumps(logs, indent=2), encoding='utf-8')
 
-    def log_file_creation(self, file_path: Path, description: str = "", is_modification: bool = False):
+    def log_file_creation(self, file_path: Path, description: str = "", 
+                         is_modification: bool = False, content: str = ""):
         """Log a file creation or modification event"""
-        logs = self._read_log_file()
-        
-        log_entry = {
-            "timestamp": datetime.now().isoformat(),
-            "file_path": str(file_path),
-            "operation": "modification" if is_modification else "creation",
-            "description": description,
-            "file_size": file_path.stat().st_size if file_path.exists() else 0
-        }
-        
-        logs.append(log_entry)
-        self._write_log_file(logs)
+        super().log_file_creation(
+            file_path=file_path,
+            description=description,
+            is_modification=is_modification,
+            content=content
+        )
 
     def get_file_history(self, file_path: str) -> List[Dict[str, Any]]:
         """Get history of operations for a specific file"""

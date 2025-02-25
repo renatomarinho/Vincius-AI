@@ -26,7 +26,7 @@ Format the request body following these rules:
 
 Generate response in exactly this format:
 
-FILE: docs/requests/post_request.json
+FILE: Docs/requests/post_request.json
 Type: json
 Content:
 {{

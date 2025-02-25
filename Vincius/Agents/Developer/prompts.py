@@ -15,11 +15,10 @@ Follow these guidelines:
 Provide your implementation using this format for each file:
 
 FILE: path/to/file.ext
-Type: file_extension
+Type: file_type
 Description: Brief description of the file's purpose
-CONTENT_START
+Content:
 [Complete implementation code here]
-CONTENT_END
 
 You can create multiple files by repeating this format.
 Each file must be complete and properly structured.
@@ -159,32 +158,34 @@ Guidelines:
 
     @staticmethod
     def generate_review_prompt(file_path: str, file_type: str, content: str) -> str:
-        """Generate review prompt with proper file format"""
+        """Generate more explicit review prompt with proper file format"""
         return f"""
-Review this code and suggest improvements:
+As a senior code reviewer, analyze this code for improvements.
 
 File: {file_path}
-Content:
+Type: {file_type}
+
+Current content:
 {content}
 
-If improvements needed, respond using this format:
+You must respond in a specific format:
+
+If you find issues that need improvements, respond with:
 
 FILE: {file_path}
-Type: {file_type}
-Description: Explain improvements needed
-CONTENT_START
-[Improved code here]
-CONTENT_END
+Description: [Explain what issues were found and what improvements are being made]
+Content:
+[Complete improved version of the file]
 
-You can also suggest new files:
+You can suggest additional files if needed using the same format:
 
-FILE: new/related/file.ext
-Type: file_type
-Description: Why this new file is needed
-CONTENT_START
-[New file content]
-CONTENT_END
+FILE: [new-file-path]
+Description: [Why this new file is needed]
+Content:
+[Complete file content]
 
-If no improvements needed, respond with:
-"VALIDATION_PASSED: Code follows best practices"
+If no improvements are needed, respond exactly with:
+"VALIDATION_PASSED: Code follows best practices. No improvements needed."
+
+Remember to maintain proper indentation and formatting in your code examples.
 """

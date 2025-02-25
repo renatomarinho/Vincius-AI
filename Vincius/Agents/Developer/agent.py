@@ -9,11 +9,13 @@ from Vincius.Agents.Developer.code_reviewer import CodeReviewer
 class DeveloperAgent(BaseAgent):
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
+        self.name = "Developer"
         self.config = config
         self.brain = BrainModel()
         self.code_creator = CodeCreator()
         self.code_reviewer = CodeReviewer()
         self.fs_manager = FileSystemManager()
+        print(f"🔧 Initialized {self.name} agent")
 
     def execute(self, input_data: Any = None) -> str:
         try:

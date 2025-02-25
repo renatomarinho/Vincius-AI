@@ -1,228 +1,152 @@
-from typing import Dict, Any, List, Optional
 from pathlib import Path
-import re
-import ast
-import os
+from typing import List, Dict, Any, Optional
 from Vincius.Core.file_system_manager import FileSystemManager
-from Vincius.Core.content_parser import ContentParser
 from Vincius.Agents.Developer.prompts import DeveloperPrompts
 
 class CodeReviewer:
-    MAX_FILE_LINES = 500
-
     def __init__(self):
         self.fs_manager = FileSystemManager()
-        self.content_parser = ContentParser()
-
-    def review_files(self, files: List[Path], brain: Any, config: Dict) -> None:
-        """Review and improve code files"""
+        
+    def review_files(self, files: List[Path], brain: Any, config: Dict[str, Any]) -> bool:
+        """Review a list of files and suggest improvements"""
         try:
-            # Expand file list to include all files in Code directory
-            all_files = self._get_all_files()
-            if not all_files:
+            print(f"\n🔍 Starting code review phase...")
+            
+            # Get all files from directory if not provided
+            if not files:
+                files = self.fs_manager.list_files()
+                
+            if not files:
                 print("⚠️ No files found in Code directory")
-                return
-
-            print(f"\n📂 Found {len(all_files)} files to review")
-            for file_path in all_files:
-                print(f"\n📋 Reviewing: {file_path}")
-                
-                # Read current content
-                content = self.fs_manager.get_file_content(file_path)
-                if not content:
-                    continue
-
-                # Check file size and completeness
-                num_lines = len(content.splitlines())
-                if num_lines > self.MAX_FILE_LINES:
-                    print(f"⚠️ File {file_path} is too large ({num_lines} lines). Requesting refactoring...")
-                    refactored_files = self._request_refactoring(file_path, content, brain, config)
-                    if refactored_files:
-                        print("✅ File successfully refactored into smaller components")
-                        continue
-                    else:
-                        print("⚠️ Proceeding with review of large file...")
-
-                if not self._is_file_complete(file_path, content):
-                    print(f"⚠️ File {file_path} appears incomplete. Requesting complete version...")
-                    complete_content = self._request_complete_file(file_path, content, brain, config)
-                    if complete_content:
-                        content = complete_content
-                    else:
-                        print(f"❌ Failed to get complete version of {file_path}")
-                        continue
-                
-                # Generate and execute review
-                prompt = DeveloperPrompts.generate_review_prompt(
-                    str(file_path),
-                    file_path.suffix[1:],
-                    content
-                )
-                review_result = brain.generate(prompt, config)
-                
-                # Process review results
-                if "VALIDATION_PASSED" in review_result:
-                    print(f"✅ No improvements needed for {file_path.name}")
-                    continue
-                
-                # Process improvements if needed
-                self._process_improvements(review_result)
-                
-        except Exception as e:
-            print(f"❌ Error in review_files: {e}")
-
-    def _is_file_complete(self, file_path: Path, content: str) -> bool:
-        if not content:
-            return False
-
-        # Check for obvious truncation
-        if content.rstrip().endswith(('(', '{', '[', ',', '\\', '+')):
-            return False
-
-        # For Python files, try parsing the AST
-        if file_path.suffix.lower() == '.py':
-            try:
-                ast.parse(content)
-                return True
-            except SyntaxError:
                 return False
-
-        # Count opening/closing brackets/braces
-        brackets = {'(': ')', '{': '}', '[': ']'}
-        counts = {char: 0 for chars in brackets.items() for char in chars}
-        
-        for char in content:
-            if char in counts:
-                counts[char] += 1
                 
-        for opener, closer in brackets.items():
-            if counts[opener] != counts[closer]:
-                return False
-
-        # Check for incomplete string literals
-        quote_chars = '"\'`'
-        for quote in quote_chars:
-            if content.count(quote) % 2 != 0:
-                return False
-
-        return True
-
-    def _request_complete_file(self, file_path: Path, partial_content: str, brain: Any, config: Dict) -> Optional[str]:
-        """Request complete version of incomplete file"""
-        prompt = DeveloperPrompts.request_complete_file(file_path.name, partial_content)
-        
-        try:
-            result = brain.generate(prompt, config)
-            files_info = self.content_parser.parse_files_section(result)
-            
-            if not files_info:
-                return None
+            # Review each file
+            improvements_needed = False
+            for file_path in files:
+                is_improved = self.review_file(file_path, brain, config)
+                improvements_needed = improvements_needed or is_improved
                 
-            # Get first file's content
-            if len(files_info) > 0 and files_info[0].get('content'):
-                content = files_info[0]['content']
-                if self._is_file_complete(file_path, content):
-                    return content
-                    
-            return None
-            
-        except Exception as e:
-            print(f"❌ Error requesting complete file: {e}")
-            return None
-
-    def _process_improvements(self, review_result: str) -> None:
-        """Process improvement suggestions"""
-        try:
-            files_info = self.content_parser.parse_files_section(review_result)
-            
-            # Process each file
-            for file_info in files_info:
-                if self._is_file_complete(Path(file_info["path"]), file_info["content"]):
-                    self.fs_manager.create_or_update_file(file_info)
-                else:
-                    print(f"⚠️ Skipping incomplete file: {file_info['path']}")
-                    
-        except Exception as e:
-            print(f"❌ Error processing improvements: {e}")
-
-    def _generate_review_prompt(self, file_path: Path, content: str) -> str:
-        """Generate review prompt using DeveloperPrompts"""
-        return DeveloperPrompts.generate_review_prompt(
-            file_path.name,
-            file_path.suffix.lstrip('.'),
-            content
-        )
-
-    def _request_refactoring(self, file_path: Path, content: str, brain: Any, config: Dict) -> bool:
-        """Request refactoring of large file into smaller components"""
-        prompt = DeveloperPrompts.request_refactoring(
-            str(file_path), 
-            content, 
-            self.MAX_FILE_LINES
-        )
-        
-        try:
-            result = brain.generate(prompt, config)
-            files_info = self.content_parser.parse_files_section(result)
-            
-            if not files_info:
-                return False
-
-            # Verify all refactored files are complete and smaller
-            all_valid = True
-            for file_info in files_info:
-                file_content = file_info.get('content', '')
-                if len(file_content.splitlines()) > self.MAX_FILE_LINES:
-                    print(f"⚠️ Refactored file {file_info['path']} is still too large")
-                    all_valid = False
-                    continue
-                    
-                if not self._is_file_complete(Path(file_info['path']), file_content):
-                    print(f"⚠️ Refactored file {file_info['path']} is incomplete")
-                    all_valid = False
-                    continue
-                    
-                # Create the refactored file
-                self.fs_manager.create_or_update_file(file_info)
-                print(f"✅ Created refactored file: {file_info['path']}")
-
-            return all_valid
-            
-        except Exception as e:
-            print(f"❌ Error during refactoring: {e}")
-            return False
-
-    def _get_all_files(self) -> List[Path]:
-        """Get all files recursively from Code directory"""
-        try:
-            code_dir = self.fs_manager.code_dir
-            if not code_dir.exists():
-                print(f"⚠️ Code directory not found at: {code_dir}")
-                return []
-
-            print(f"\n🔍 Scanning directory: {code_dir}")
-            all_files = []
-            
-            # Walk through all directories
-            for root, dirs, files in os.walk(code_dir):
-                root_path = Path(root)
+            if not improvements_needed:
+                print("\n✅ Code review passed: No improvements needed")
                 
-                # Skip certain directories
-                dirs[:] = [d for d in dirs if not d.startswith(('.', '__'))]
-                
-                for file in files:
-                    # Skip hidden and system files
-                    if file.startswith(('.', '__')):
-                        continue
-                        
-                    file_path = root_path / file
-                    rel_path = file_path.relative_to(code_dir)
-                    print(f"📄 Found: {rel_path}")
-                    all_files.append(rel_path)
-
-            print(f"\n✅ Found {len(all_files)} files to review")
-            return sorted(all_files)  # Sort for consistent ordering
-
+            return True
+            
         except Exception as e:
             print(f"❌ Error scanning directory: {e}")
-            return []
+            return False
+            
+    def review_file(self, file_path: Path, brain: Any, config: Dict[str, Any]) -> bool:
+        """Review a single file and apply improvements if needed"""
+        try:
+            # Check if file exists and is supported
+            if not self._is_reviewable(file_path):
+                print(f"⚠️ Skipping review for {file_path} (not reviewable)")
+                return False
+                
+            # Get file content
+            content = self.fs_manager.get_file_content(file_path)
+            if not content:
+                print(f"⚠️ Unable to read content of {file_path}")
+                return False
+                
+            # Generate review prompt with improved format
+            file_type = file_path.suffix.lstrip('.')
+            relative_path = file_path.relative_to(self.fs_manager.base_dir)  # Use base_dir instead of code_dir
+            prompt = DeveloperPrompts.generate_review_prompt(
+                str(relative_path),
+                file_type,
+                content
+            )
+            
+            # Get feedback from LLM
+            print(f"\n🔍 Reviewing: {relative_path}")
+            feedback = brain.generate(prompt, config)
+            
+            # Check if improvements are needed
+            if "VALIDATION_PASSED" in feedback:
+                print(f"✅ No improvements needed for {relative_path}")
+                return False
+                
+            # Debug the received feedback
+            print(f"\n🔍 DEBUG: Review feedback received ({len(feedback)} chars)")
+            print(f"Feedback preview: {feedback[:200]}...\n")
+            
+            # Process feedback to create/update files
+            try:
+                print(f"🔄 Applying suggested improvements...")
+                updated_files = self.fs_manager.process_content(
+                    feedback,
+                    brain=brain,
+                    config=config,
+                    retry_prompt=prompt
+                )
+                
+                if updated_files:
+                    print(f"✅ Applied improvements to {len(updated_files)} files")
+                    return True
+                    
+                print(f"⚠️ No valid improvements found for {relative_path}")
+                return False
+                
+            except Exception as e:
+                print(f"⚠️ Failed to process improvements: {e}")
+                # Try to directly extract any code blocks
+                print("🔄 Attempting alternative processing...")
+                # Fallback: At least try to update the current file
+                self._apply_fallback_improvement(file_path, feedback, relative_path)
+                return True
+            
+        except Exception as e:
+            print(f"❌ Error reviewing file {file_path}: {e}")
+            return False
+            
+    def _apply_fallback_improvement(self, file_path: Path, feedback: str, relative_path: str) -> bool:
+        """Fallback method to extract and apply improvements when regular parsing fails"""
+        try:
+            # Look for code blocks
+            import re
+            code_blocks = re.findall(r'```[a-zA-Z]*\n(.*?)```', feedback, re.DOTALL)
+            
+            if code_blocks:
+                # Use the largest code block
+                largest_block = max(code_blocks, key=len)
+                
+                # Create file info
+                file_info = {
+                    "path": str(relative_path),
+                    "content": largest_block,
+                    "description": "Applied improvements using fallback extraction",
+                    "modifications": True
+                }
+                
+                # Update file directly
+                updated_path = self.fs_manager.create_or_update_file(file_info)
+                if updated_path:
+                    print(f"✅ Applied improvements using fallback method to {relative_path}")
+                    return True
+            
+            print("⚠️ Could not extract improvements even with fallback method")
+            return False
+            
+        except Exception as e:
+            print(f"❌ Error in fallback improvement: {e}")
+            return False
+            
+    def _is_reviewable(self, file_path: Path) -> bool:
+        """Check if file is suitable for review"""
+        # Skip directories, hidden files, and backup files
+        if not file_path.is_file() or file_path.name.startswith('.'):
+            return False
+            
+        # Skip backup files
+        if file_path.name.endswith('.bak') or 'backup' in str(file_path):
+            return False
+            
+        # List of supported file extensions for review
+        supported_extensions = [
+            '.py', '.js', '.ts', '.html', '.css', '.scss',
+            '.jsx', '.tsx', '.json', '.yaml', '.yml', '.md',
+            '.c', '.cpp', '.h', '.java', '.php', '.rb', '.go'
+        ]
+        
+        return file_path.suffix.lower() in supported_extensions

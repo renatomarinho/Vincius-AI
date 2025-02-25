@@ -33,7 +33,7 @@ class APIMethod(ABC):
         """Save the formatted request to a JSON file"""
         try:
             file_info = {
-                "path": f"docs/requests/{self.get_method_name().lower()}_request.json",
+                "path": f"Docs/requests/{self.get_method_name().lower()}_request.json",
                 "type": "json",
                 "content": {
                     "method": self.get_method_name(),

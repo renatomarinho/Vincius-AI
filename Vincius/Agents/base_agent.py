@@ -1,14 +1,36 @@
 from typing import Dict, Any, Optional, List, Callable
 import yaml
 import time
+import os
 
 class BaseAgent:
     """Base class for all agents with retry functionality"""
     
     def __init__(self, config: Dict[str, Any]):
+        """Initialize base agent with configuration"""
         self.config = config
         self.max_retries = 3
         self.retry_delay = 10  # seconds
+        self.name = None  # Add name property
+        
+        # Clear previous agent type before setting new one
+        if 'CURRENT_AGENT_TYPE' in os.environ:
+            del os.environ['CURRENT_AGENT_TYPE']
+            
+        # Set current agent type
+        os.environ['CURRENT_AGENT_TYPE'] = self.__class__.__name__.replace('Agent', '')
+        print(f"🔄 Switched to agent: {os.environ['CURRENT_AGENT_TYPE']}")
+
+    def __del__(self):
+        """Cleanup when agent is destroyed"""
+        if 'CURRENT_AGENT_TYPE' in os.environ:
+            del os.environ['CURRENT_AGENT_TYPE']
+            print(f"🧹 Cleaned up agent environment")
+
+    @property
+    def agent_type(self) -> str:
+        """Get the current agent type"""
+        return self.name or self.__class__.__name__.replace('Agent', '')
 
     def _retry_on_failure(self, prompt: str, brain: Any, error_msg: str = "") -> Optional[str]:
         """Retry functionality for model requests with better error handling"""
