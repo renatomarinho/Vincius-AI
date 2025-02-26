@@ -10,7 +10,7 @@ workflow:
       output_key: api_request_result
       agent_config:
         base_dir_key: "API"
-        method: "GET"
+        method: "DELETE"
         api_config:
           base_url: "https://run.mocky.io/v3/ce6eb924-5ea9-4eeb-a00e-1996dd1c0690"
     next_steps:

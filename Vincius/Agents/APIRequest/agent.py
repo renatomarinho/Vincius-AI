@@ -174,7 +174,7 @@ class APIRequestAgent(BaseAgent):
         try:
             print(f"\n🌐 Creating {self.method_name} request...")
             
-            if self.method_name == 'GET':
+            if self.method_name in ['GET', 'DELETE']:
                 api_config = self.config.get('api_config', {})
                 
                 # Process dynamic configuration from input_data
@@ -187,7 +187,7 @@ class APIRequestAgent(BaseAgent):
                 
                 base_url = api_config.get('base_url')
                 if not base_url:
-                    return "Error: Base URL not provided in api_config"
+                    return f"Error: Base URL not provided in api_config for {self.method_name} request"
                 
                 # Process input parameters
                 params_config = api_config.get('params', {})
@@ -212,9 +212,68 @@ class APIRequestAgent(BaseAgent):
                 print(f"   URL Parameters: {url_params}")
                 print(f"   Query Parameters: {query_params}")
                 
-                # Execute the GET request using GetMethod
+                # Execute the request using appropriate Method
                 result = self.method.execute_request(
                     base_url=base_url,
+                    params={**url_params, **query_params},
+                    headers=headers,
+                    auth=auth
+                )
+                
+                return result
+            
+            elif self.method_name in ['POST', 'PUT']:
+                api_config = self.config.get('api_config', {})
+                
+                # Process dynamic configuration from input_data
+                if isinstance(input_data, dict):
+                    api_config = self._merge_dynamic_params(api_config, input_data)
+                    # Remove api_config from input_data to avoid processing it as parameters
+                    request_params = {k: v for k, v in input_data.items() if k != 'api_config'}
+                else:
+                    request_params = input_data if isinstance(input_data, dict) else {}
+                
+                base_url = api_config.get('base_url')
+                if not base_url:
+                    return f"Error: Base URL not provided in api_config for {self.method_name} request"
+                
+                # Process input parameters
+                params_config = api_config.get('params', {})
+                
+                # Validate URL parameters
+                url_params = self._validate_params(
+                    request_params,
+                    params_config.get('url_params', [])
+                )
+                
+                # Validate query parameters
+                query_params = self._validate_params(
+                    request_params,
+                    params_config.get('query_params', [])
+                )
+                
+                # Extract body data from request_params or use specified body
+                body = api_config.get('body', {})
+                if 'body' in request_params:
+                    body = request_params.pop('body')  # Extract body from params
+                
+                # Setup authentication
+                headers, auth = self._setup_auth(api_config.get('auth', {}))
+                
+                # Add custom headers if provided
+                if 'headers' in api_config:
+                    headers.update(api_config['headers'])
+                
+                print(f"🔍 Using dynamic configuration:")
+                print(f"   Base URL: {base_url}")
+                print(f"   URL Parameters: {url_params}")
+                print(f"   Query Parameters: {query_params}")
+                print(f"   Body: {body}")
+                
+                # Execute the POST/PUT request
+                result = self.method.execute_request(
+                    base_url=base_url,
+                    body=body,
                     params={**url_params, **query_params},
                     headers=headers,
                     auth=auth

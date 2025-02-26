@@ -13,6 +13,20 @@ A specialized agent for handling HTTP requests to external APIs, with support fo
 - Environment variable support for sensitive data.
 - YAML-based configuration.
 
+## HTTP Methods
+
+### GET
+Used to retrieve data from a specified resource. GET requests should only retrieve data and not modify it.
+
+### POST
+Used to send data to create or update a resource. POST requests are not idempotent - sending the same request multiple times typically results in multiple resources being created.
+
+### PUT
+Used to update an existing resource or create it if it doesn't exist. PUT requests are idempotent - sending the same request multiple times has the same effect as sending it once.
+
+### DELETE
+Used to delete a specified resource. DELETE requests are typically idempotent - deleting a resource multiple times returns the same result.
+
 ## Configuration
 
 ### Basic Setup
